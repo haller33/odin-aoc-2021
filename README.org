@@ -1,0 +1,8 @@
+* Odin AoC 2021
+
+* Odin Version
+
+#+begin_src bash
+$ odin version
+odin version dev-2022-12:382bd876
+#+end_src
