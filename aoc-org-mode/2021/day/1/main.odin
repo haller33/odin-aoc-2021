@@ -12,8 +12,6 @@ main :: proc () {
 
     // file_path_name = "example"
 
-    // sizeofs : i64 = os.file_size_from_path("input")
-    // fmt.println(sizeofs)
     counter := 0
     
     data, ok := os.read_entire_file(file_path_name, context.allocator)
