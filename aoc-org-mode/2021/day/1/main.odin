@@ -6,8 +6,9 @@ import "core:strings"
 import md "core:math/big"
 import strc "core:strconv"
 
+TEST_EXAMPLE :: false
 
-count_incrising_values :: proc ( arr_values : map[int]int ) -> int {
+count_incrising_values :: proc ( arr_values : ^map[int]int ) -> int {
 
     previous : int = 0
     count : int = 0
@@ -32,8 +33,10 @@ first_part :: proc () -> bool {
 
     file_path_name := "input"
 
-    // file_path_name = "example"
-
+    if TEST_EXAMPLE {
+	file_path_name = "example"
+    }
+    
     counter := 0
     
     data, ok := os.read_entire_file(file_path_name, context.allocator)
@@ -51,13 +54,14 @@ first_part :: proc () -> bool {
     strings_values : []string = split_string[:len(split_string)-1]
 
     arr_values : map[int]int
+    defer delete(arr_values)
 
     for item, index in strings_values {
 
 	arr_values[index] = strc.atoi ( item )
     }
 
-    count : int = count_incrising_values ( arr_values )
+    count : int = count_incrising_values ( &arr_values )
 
     fmt.println ( count )
 
@@ -106,17 +110,18 @@ second_part :: proc () -> bool {
 
     file_values_arr : []string 
 
-    // file_name = "example"
-
+    if TEST_EXAMPLE {
+	file_name = "example"
+    }
+    
+    
     file_values_arr = array_split_space_file_string_path ( file_name )
     defer delete ( file_values_arr, context.allocator )
 
     mapsValues : map[int]int = split_sum_of_thre_regions ( file_values_arr )
+    defer delete (mapsValues)
     
-    // for line in file_values_arr {
-    // fmt.println ( strc.atoi ( line ) )
-    // }
-    count : int = count_incrising_values ( mapsValues )
+    count : int = count_incrising_values ( &mapsValues )
 
     fmt.println ( count )
 
