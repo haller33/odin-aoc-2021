@@ -114,7 +114,6 @@ second_part :: proc () -> bool {
 	file_name = "example"
     }
     
-    
     file_values_arr = array_split_space_file_string_path ( file_name )
     defer delete ( file_values_arr, context.allocator )
 
