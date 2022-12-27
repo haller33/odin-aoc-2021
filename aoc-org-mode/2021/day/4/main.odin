@@ -6,7 +6,12 @@ import "core:strings"
 import strc "core:strconv"
 import "core:slice"
 import "core:container/queue"
+import "core:mem"
 
+
+SHOW_LEAK :: false
+
+TEST_MODE :: false
 
 TEST_EXAMPLE :: true
 
@@ -33,21 +38,21 @@ read_entire_file_from_path :: proc (file_path_name : string) -> (string, bool) {
     return string(data_text_digest), ok
 }
 
-texto_to_lines_int :: proc ( file_text : string ) -> map[int]string {
+texto_to_lines_int :: proc ( file_text : string ) -> []string {
     
     split_string : []string = strings.split_after ( file_text, "\n" )
     
     strings_values : []string = split_string[:len(split_string)-1]
 
-    arr_values : map[int]string
+    arr_values : [dynamic]string
     // defer delete(arr_values)
 
     for item, index in strings_values {
 
-	arr_values[index] = strings.trim_space ( item )
+	append( &arr_values, strings.trim_space ( item ) )
     }
 
-    return arr_values
+    return arr_values[:]
 }
 
 
@@ -67,7 +72,7 @@ mapstring_to_string :: proc ( data : map[int]string ) -> string {
     return strings.concatenate ( stringResul )
 }
 
-parser_puzzles :: proc ( map_arr_string : map[int]string, beginfrom : int = 0 ) -> []GamePuzzleGrid {
+parser_puzzles :: proc ( arr_string : []string ) -> []GamePuzzleGrid {
 
     
     relative_count_coluns : int = 0
@@ -100,19 +105,24 @@ parser_puzzles :: proc ( map_arr_string : map[int]string, beginfrom : int = 0 ) 
 	return tmp_strigs
     }
 
-    for idx in beginfrom..<len(map_arr_string) {
+    for item, idx in arr_string {
 
-	if map_arr_string[idx] == "" {    
+	if ! ( item == "" ) {    
 	    
-	    tmp_strings = strings.split_after ( map_arr_string[idx], " " )
-
+	    tmp_strings = strings.split_after ( item, " " )
 	    tmp_filtered = slice.filter ( tmp_strings, is_empty )
 
+	    fmt.println ( tmp_filtered )
+	    // fmt.println ( len ( tmp_filtered ) )
+
+	    
+
 	    // fmt.println ( tmp_filtered [ idx ] )
+	    /*
 	    for idx_colums in 0..<len(tmp_filtered) {
 		fmt.println ( " ", idx, " ", idx_colums," " )//, tmp_filtered [ idx ][ idx_colums ])
 		// filtered_strings[idx][idx_colums] = tmp_filtered [ idx ][ idx_colums ]
-	    }
+	    } */
 	}
 	// filtered_strings[idx] = 
     }
@@ -158,7 +168,7 @@ parser_puzzles :: proc ( map_arr_string : map[int]string, beginfrom : int = 0 ) 
     return puzzles
 }
 
-shift_array :: proc ( map_arr_string : map[int]string, offset : int = 0 ) -> map[int]string {
+shift_array :: proc ( map_arr_string : []string, offset : int = 0 ) -> map[int]string {
 
     map_new_shift := make ( map[int]string, len(map_arr_string) )
     relative_counter := 0
@@ -198,21 +208,54 @@ first_part :: proc () {
 
     something : GamePuzzleGrid
 
-    lines_correct_text := shift_array ( lines_data_text, 1 )
+    lines_correct_text := lines_data_text[1:]
+
+    // fmt.println ( lines_correct_text )
     // defer delete ( lines_correct_text )
 
-    parser_puzzles ( map_arr_string = lines_correct_text )
+    parser_puzzles ( lines_correct_text )
 
     return
 }
 
 test :: proc () {
 
+    {
+	n : [dynamic]string
+
+	append ( &n, "something here" )
+	append ( &n, "some other stuff" )
+	append ( &n, "some even better" )
+
+	s : []string = n[:]
+
+	fmt.println ( s [1:] )
+	
+	fmt.println ( s )
+	fmt.println ( n )
+	fmt.println ( n[1:] )
+    }
 }
 
 main :: proc () {
 
-    // test ( ) 
-    first_part ()
+    track: mem.Tracking_Allocator
+    mem.tracking_allocator_init(&track, context.allocator)
+    context.allocator = mem.tracking_allocator(&track)
+
+    when TEST_MODE {
+	test ( )
+    } else {
+	first_part ()
+    }
+
+    when SHOW_LEAK {
+	for _, leak in track.allocation_map {
+	    fmt.printf("%v leaked %v bytes\n", leak.location, leak.size)
+	}
+	for bad_free in track.bad_free_array {
+	    fmt.printf("%v allocation %p was freed badly\n", bad_free.location, bad_free.memory)
+	}
+    }
     return
 }
